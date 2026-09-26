@@ -37,16 +37,27 @@ exports.postLogin = async (req, res) => {
 
         const user = await User.findOne({ where: { email } });
         if (!user) {
-            return res.status(404).json({ message: "User doesn't exist" });
+            return res.status(404).json({ message: 'User not found' });
         }
 
-        const isMatch = (await bcrypt.compare(password, user.password)) || (password === user.password);
+        let isMatch = false;
+        try {
+            isMatch = await bcrypt.compare(password, user.password);
+        } catch (err) {
+            isMatch = false;
+        }
+
+        if (!isMatch && user.password === password) {
+            isMatch = true;
+        }
+
         if (!isMatch) {
-            return res.status(401).json({ message: 'Incorrect password' });
+            return res.status(401).json({ message: 'User not authorized' });
         }
 
-        res.status(200).json({ message: 'User login successful' });
+        res.status(200).json({ message: 'User login sucessful' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
